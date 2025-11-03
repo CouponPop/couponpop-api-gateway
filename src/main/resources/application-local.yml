@@ -35,6 +35,24 @@ spring:
           filters:
             # /api/v1/coupons/actuator/health -> /actuator/health
             - RewritePath=/api/v1/coupons/actuator/health, /actuator/health
+
+        - id: notification-service-health
+          uri: http://localhost:8084 # notification Service (8084)
+          predicates:
+            # Notification Service 헬스 체크 경로
+            - Path=/api/v1/notifications/actuator/health
+          filters:
+            # /api/v1/notifications/actuator/health -> /actuator/health
+            - RewritePath=/api/v1/notifications/actuator/health, /actuator/health
+
+        - id: batch-service-health
+          uri: http://localhost:8085 # batch Service (8085)
+          predicates:
+            # Batch Service 헬스 체크 경로
+            - Path=/api/v1/batch/actuator/health
+          filters:
+            # /api/v1/batch/actuator/health -> /actuator/health
+            - RewritePath=/api/v1/batch/actuator/health, /actuator/health
         # -----------------------------------------------
         # 2. Member Service APIs
         # -----------------------------------------------
