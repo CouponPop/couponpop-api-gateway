@@ -34,28 +34,46 @@ spring:
         # -----------------------------------------------
         # 2. General API Routes (범용 경로)
         # -----------------------------------------------
-        - id: member-service-api
-          uri: http://member:8080 # Service Connect 이름
+        # ===== Member Service =====
+        - id: member-service-auth-api
+          uri: http://member:8080   # Service Connect 이름
           predicates:
             - Path=/api/v1/auth/**
+
+        - id: member-service-member-api
+          uri: http://member:8080
+          predicates:
             - Path=/api/v1/members/**
 
-        - id: store-service-api
-          uri: http://store:8080 # Service Connect 이름
+        # ===== Store Service =====
+        - id: store-service-owner-api
+          uri: http://store:8080
           predicates:
             - Path=/api/v1/owner/stores/**
+
+        - id: store-service-owners-api
+          uri: http://store:8080
+          predicates:
             - Path=/api/v1/owners/**
+
+        - id: store-service-api
+          uri: http://store:8080
+          predicates:
             - Path=/api/v1/stores/**
 
-        - id: coupon-service-api
-          uri: http://coupon:8080 # Service Connect 이름
+        # ===== Coupon Service =====
+        - id: coupon-service-owner-api
+          uri: http://coupon:8080
           predicates:
             - Path=/api/v1/owner/coupons/**
+
+        - id: coupon-service-api
+          uri: http://coupon:8080
+          predicates:
             - Path=/api/v1/coupons/**
 
-# Actuator (Gateway 자체 헬스 체크)
 management:
   endpoints:
     web:
       exposure:
-        include: health # 헬스 체크만 노출 (info 등 불필요)
+        include: health # 헬스 체크만 노출

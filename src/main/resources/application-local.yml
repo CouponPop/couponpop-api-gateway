@@ -36,28 +36,43 @@ spring:
             # /api/v1/coupons/actuator/health -> /actuator/health
             - RewritePath=/api/v1/coupons/actuator/health, /actuator/health
         # -----------------------------------------------
-        # 2. General API Routes (범용 경로)
+        # 2. Member Service APIs
         # -----------------------------------------------
-        - id: member-service-api
-          uri: http://localhost:8081 # Member Service (8081)
+        - id: member-service-auth-api
+          uri: http://localhost:8081
           predicates:
             - Path=/api/v1/auth/**
-            - Path=/api/v1/members/**
-          # 필터 없음: /api/v1/members/profile -> http://localhost:8081/api/v1/members/profile
 
-        - id: store-service-api
-          uri: http://localhost:8082 # Store Service (8082)
+        - id: member-service-member-api
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/members/**
+
+        # -----------------------------------------------
+        # 3. Store Service APIs
+        # -----------------------------------------------
+        - id: store-service-owner-api
+          uri: http://localhost:8082
           predicates:
             - Path=/api/v1/owner/stores/**
-            - Path=/api/v1/stores/**
-          # 필터 없음: /api/v1/stores/1 -> http://localhost:8082/api/v1/stores/1
 
-        - id: coupon-service-api
-          uri: http://localhost:8083 # Coupon Service (8083)
+        - id: store-service-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/stores/**
+
+        # -----------------------------------------------
+        # 4. Coupon Service APIs
+        # -----------------------------------------------
+        - id: coupon-service-owner-api
+          uri: http://localhost:8083
           predicates:
             - Path=/api/v1/owner/coupons/**
+
+        - id: coupon-service-api
+          uri: http://localhost:8083
+          predicates:
             - Path=/api/v1/coupons/**
-          # 필터 없음: /api/v1/coupons/check -> http://localhost:8083/api/v1/coupons/check
 
           # Notification Service는 외부 API 호출 없음
 
