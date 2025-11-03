@@ -31,6 +31,20 @@ spring:
           filters:
             - RewritePath=/api/v1/coupons/actuator/health, /actuator/health
 
+        - id: notification-service-health
+          uri: http://notification:8080
+          predicates:
+            - Path=/api/v1/notifications/actuator/health
+          filters:
+            - RewritePath=/api/v1/notifications/actuator/health, /actuator/health
+
+        - id: batch-service-health
+          uri: http://batch:8080
+          predicates:
+            - Path=/api/v1/batch/actuator/health
+          filters:
+            - RewritePath=/api/v1/batch/actuator/health, /actuator/health
+
         # -----------------------------------------------
         # 2. General API Routes (범용 경로)
         # -----------------------------------------------
@@ -71,6 +85,12 @@ spring:
           uri: http://coupon:8080
           predicates:
             - Path=/api/v1/coupons/**
+
+        # ===== Notification Service =====
+        - id: notification-service-fcm-token-api
+          uri: http://notification:8080
+          predicates:
+            - Path=/api/v1/fcm-token
 
 management:
   endpoints:
