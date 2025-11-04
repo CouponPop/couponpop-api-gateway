@@ -13,46 +13,37 @@ spring:
         - id: member-service-health
           uri: http://localhost:8081 # Member Service (8081)
           predicates:
-            - Path=/api/v1/members/actuator/health
+            - Path=/health/member
           filters:
-            # /api/v1/members/actuator/health -> /actuator/health
-            - RewritePath=/api/v1/members/actuator/health, /actuator/health
+            - RewritePath=/health/member, /actuator/health
 
         - id: store-service-health
           uri: http://localhost:8082 # Store Service (8082)
           predicates:
-            # Store Service 헬스 체크 경로 (패턴에 맞게 /api/v1/stores/actuator/health 로 가정)
-            - Path=/api/v1/stores/actuator/health
+            - Path=/health/store
           filters:
-            # /api/v1/stores/actuator/health -> /actuator/health
-            - RewritePath=/api/v1/stores/actuator/health, /actuator/health
+            - RewritePath=/health/store, /actuator/health
 
         - id: coupon-service-health
           uri: http://localhost:8083 # Coupon Service (8083)
           predicates:
-            # Coupon Service 헬스 체크 경로
-            - Path=/api/v1/coupons/actuator/health
+            - Path=/health/coupon
           filters:
-            # /api/v1/coupons/actuator/health -> /actuator/health
-            - RewritePath=/api/v1/coupons/actuator/health, /actuator/health
+            - RewritePath=/health/coupon, /actuator/health
 
         - id: notification-service-health
           uri: http://localhost:8084 # notification Service (8084)
           predicates:
-            # Notification Service 헬스 체크 경로
-            - Path=/api/v1/notifications/actuator/health
+            - Path=/health/notification
           filters:
-            # /api/v1/notifications/actuator/health -> /actuator/health
-            - RewritePath=/api/v1/notifications/actuator/health, /actuator/health
+            - RewritePath=/health/notification, /actuator/health
 
         - id: batch-service-health
           uri: http://localhost:8085 # batch Service (8085)
           predicates:
-            # Batch Service 헬스 체크 경로
-            - Path=/api/v1/batch/actuator/health
+            - Path=/health/batch
           filters:
-            # /api/v1/batch/actuator/health -> /actuator/health
-            - RewritePath=/api/v1/batch/actuator/health, /actuator/health
+            - RewritePath=/health/batch, /actuator/health
         # -----------------------------------------------
         # 2. Member Service APIs
         # -----------------------------------------------
