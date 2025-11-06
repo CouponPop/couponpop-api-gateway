@@ -8,7 +8,7 @@ spring:
     gateway:
       routes: # 구체적일수록 위에 작성하기
         # -----------------------------------------------
-        # 1. Health Checks (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/health)
+        # 1-1. Health Checks (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/health)
         # -----------------------------------------------
         - id: member-service-health
           uri: http://localhost:8081 # Member Service (8081)
@@ -44,6 +44,43 @@ spring:
             - Path=/health/batch
           filters:
             - RewritePath=/health/batch, /actuator/health
+        # -----------------------------------------------
+        # 1-2. Actuator Prometheus (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/prometheus)
+        # -----------------------------------------------
+        - id: member-service-prometheus
+          uri: http://localhost:8081 # Member Service (8081)
+          predicates:
+            - Path=/prometheus/member
+          filters:
+            - RewritePath=/prometheus/member, /actuator/prometheus
+
+        - id: store-service-prometheus
+          uri: http://localhost:8082 # Store Service (8082)
+          predicates:
+            - Path=/prometheus/store
+          filters:
+            - RewritePath=/prometheus/store, /actuator/prometheus
+
+        - id: coupon-service-prometheus
+          uri: http://localhost:8083 # Coupon Service (8083)
+          predicates:
+            - Path=/prometheus/coupon
+          filters:
+            - RewritePath=/prometheus/coupon, /actuator/prometheus
+
+        - id: notification-service-prometheus
+          uri: http://localhost:8084 # Notification Service (8084)
+          predicates:
+            - Path=/prometheus/notification
+          filters:
+            - RewritePath=/prometheus/notification, /actuator/prometheus
+
+        - id: batch-service-prometheus
+          uri: http://localhost:8085 # Batch Service (8085)
+          predicates:
+            - Path=/prometheus/batch
+          filters:
+            - RewritePath=/prometheus/batch, /actuator/prometheus
         # -----------------------------------------------
         # 2. Member Service APIs
         # -----------------------------------------------
@@ -95,7 +132,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health, info, prometheus
 
 logging:
   level:
