@@ -96,4 +96,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health # 헬스 체크만 노출
+        include: health, prometheus # 헬스 체크만 노출
+  metrics:
+    tags:
+      application: ${spring.application.name}
