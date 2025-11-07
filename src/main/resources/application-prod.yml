@@ -8,7 +8,7 @@ spring:
     gateway:
       routes: # 구체적일수록 위에 작성하기
         # -----------------------------------------------
-        # 1. Health Checks  (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/health)
+        # 1-1. Health Checks  (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/health)
         # -----------------------------------------------
         - id: member-service-health
           uri: http://member.couponpop.internal:8080 # Service Connect의 "검색 이름" (예: member)으로 사용
@@ -44,6 +44,43 @@ spring:
             - Path=/health/batch
           filters:
             - RewritePath=/health/batch, /actuator/health
+        # -----------------------------------------------
+        # 1-2. Actuator Prometheus  (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/prometheus)
+        # -----------------------------------------------
+        - id: member-service-prometheus
+          uri: http://member.couponpop.internal:8080 # Service Connect의 "검색 이름" (예: member)으로 사용
+          predicates:
+            - Path=/prometheus/member
+          filters:
+            - RewritePath=/prometheus/member, /actuator/prometheus
+
+        - id: store-service-prometheus
+          uri: http://store.couponpop.internal:8080
+          predicates:
+            - Path=/prometheus/store
+          filters:
+            - RewritePath=/prometheus/store, /actuator/prometheus
+
+        - id: coupon-service-prometheus
+          uri: http://coupon.couponpop.internal:8080
+          predicates:
+            - Path=/prometheus/coupon
+          filters:
+            - RewritePath=/prometheus/coupon, /actuator/prometheus
+
+        - id: notification-service-prometheus
+          uri: http://notification.couponpop.internal:8080
+          predicates:
+            - Path=/prometheus/notification
+          filters:
+            - RewritePath=/prometheus/notification, /actuator/prometheus
+
+        - id: batch-service-prometheus
+          uri: http://batch.couponpop.internal:8080
+          predicates:
+            - Path=/prometheus/batch
+          filters:
+            - RewritePath=/prometheus/batch, /actuator/prometheus
 
         # -----------------------------------------------
         # 2. General API Routes (범용 경로)
