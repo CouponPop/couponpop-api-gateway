@@ -74,6 +74,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: env.GPR_CREDENTIALS_ID, usernameVariable: 'GITHUB_ACTOR', passwordVariable: 'GITHUB_TOKEN')]) {
                             sh 'chmod +x ./gradlew'
                             sh '''
+                            set -e
                             SPRING_PROFILES_ACTIVE=test \
                             TZ=Asia/Seoul \
                             ./gradlew clean build --no-daemon || exit 1
@@ -186,64 +187,58 @@ pipeline {
                                            "IMAGE_URI=${imageUri}",
                                            "REGION=${env.AWS_REGION}"
                                        ]) {
-                                           // 4. 순수 Shell 스크립트 실행 (''' 사용)
-                                           sh '''
-                                               set -e
+                                            // 4. 순수 Shell 스크립트 실행 (''' 사용)
+                                            sh '''
+                                                set -e
 
-                                               echo "=========================================="
-                                               echo "🚀 Starting Blue/Green Deployment (Service already configured)"
-                                               echo "Service: $SERVICE_NAME"
-                                               echo "New Image: $IMAGE_URI"
-                                               echo "=========================================="
+                                                echo "=========================================="
+                                                echo "🚀 Starting Blue/Green Deployment (Service already configured)"
+                                                echo "Service: $SERVICE_NAME"
+                                                echo "New Image: $IMAGE_URI"
+                                                echo "=========================================="
 
-                                               # ... (aws ecs describe-task-definition ... jq ... aws ecs register-task-definition ... aws ecs update-service ... ) ...
-                                               # (배포 셸 스크립트 전체 내용은 동일하게 유지)
+                                                echo "📋 Getting current task definition..."
+                                                CURRENT_TASK_DEF=$(aws ecs describe-task-definition \
+                                                    --task-definition $TASK_DEFINITION_FAMILY \
+                                                    --region $REGION \
+                                                    --query 'taskDefinition')
 
-                                               echo "📋 Getting current task definition..."
-                                               CURRENT_TASK_DEF=$(aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --region $REGION --query 'taskDefinition')
+                                                echo "🔄 Creating new task definition with image: $IMAGE_URI"
+                                                NEW_TASK_DEF=$(echo "$CURRENT_TASK_DEF" | jq --arg IMAGE "$IMAGE_URI" --arg CONTAINER_NAME "$ECS_CONTAINER_NAME" '
+                                                    (.containerDefinitions[] | select(.name == $CONTAINER_NAME) | .image) = $IMAGE |
+                                                    del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
 
-                                               echo "🔄 Creating new task definition with image: $IMAGE_URI"
-                                               NEW_TASK_DEF=$(echo "$CURRENT_TASK_DEF" | jq --arg IMAGE "$IMAGE_URI" --arg CONTAINER_NAME "$ECS_CONTAINER_NAME" '
-                                                   (.containerDefinitions[] | select(.name == $CONTAINER_NAME) | .image) = $IMAGE |
-                                                   del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+                                                echo "📝 Registering new task definition..."
+                                                NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+                                                    --region $REGION \
+                                                    --cli-input-json "$NEW_TASK_DEF" \
+                                                    --query 'taskDefinition.taskDefinitionArn' \
+                                                    --output text)
+                                                echo "✅ New task definition: $NEW_TASK_DEF_ARN"
 
-                                               echo "📝 Registering new task definition..."
-                                               NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --region $REGION --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-                                               echo "✅ New task definition: $NEW_TASK_DEF_ARN"
+                                                echo "🚀 Initiating Blue/Green deployment..."
+                                                aws ecs update-service \
+                                                    --cluster $CLUSTER_NAME \
+                                                    --service $SERVICE_NAME \
+                                                    --task-definition $NEW_TASK_DEF_ARN \
+                                                    --force-new-deployment \
+                                                    --region $REGION
+                                                echo "✅ Blue/Green deployment initiated!"
 
-                                               echo "🚀 Initiating Blue/Green deployment..."
-                                               aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --task-definition $NEW_TASK_DEF_ARN --force-new-deployment --region $REGION > /dev/null
-                                               echo "✅ Blue/Green deployment initiated!"
+                                                # 5. 배포 모니터링 (aws ecs wait 사용)
+                                                echo "👀 Monitoring deployment progress... (Waiting for services-stable)"
 
-                                               echo "👀 Monitoring deployment progress..."
-                                               TIMEOUT=2400
-                                               ELAPSED=0
-                                               while [ $ELAPSED -lt $TIMEOUT ]; do
-                                                   SERVICE_INFO=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $REGION --query 'services[0]')
-                                                   DEPLOYMENT_STATUS=$(echo $SERVICE_INFO | jq -r '.deployments[0].status')
-                                                   RUNNING_COUNT=$(echo $SERVICE_INFO | jq -r '.runningCount')
-                                                   DESIRED_COUNT=$(echo $SERVICE_INFO | jq -r '.desiredCount')
-                                                   DEPLOYMENTS=$(echo $SERVICE_INFO | jq -r '.deployments | length')
+                                                # while 루프 대신 aws ecs wait 명령어 사용
+                                                # (기본 타임아웃 40분, Bake Time 포함하여 대기)
+                                                aws ecs wait services-stable \
+                                                    --cluster $CLUSTER_NAME \
+                                                    --services $SERVICE_NAME \
+                                                    --region $REGION
 
-                                                   echo "[ $(date '+%H:%M:%S') ] Status: $DEPLOYMENT_STATUS | Running: $RUNNING_COUNT/$DESIRED_COUNT | Deployments: $DEPLOYMENTS"
-
-                                                   if [ "$DEPLOYMENT_STATUS" = "PRIMARY" ] && [ "$RUNNING_COUNT" = "$DESIRED_COUNT" ] && [ "$DEPLOYMENTS" = "1" ]; then
-                                                       echo "🎉 Blue/Green deployment completed successfully!"
-                                                       break
-                                                   elif [ "$DEPLOYMENT_STATUS" = "FAILED" ]; then
-                                                       echo "💥 Deployment failed!"
-                                                       exit 1
-                                                   fi
-                                                   sleep 30
-                                                   ELAPSED=$(( $ELAPSED + 30 ))
-                                               done
-                                               if [ $ELAPSED -ge $TIMEOUT ]; then
-                                                   echo "⏰ Deployment timeout reached!"
-                                                   exit 1
-                                               fi
-                                               echo "🎊 Deployment successful! New version is now serving traffic."
-                                           '''
-                                       } // end withEnv
+                                                echo "🎉 Blue/Green deployment completed successfully!"
+                                                echo "🎊 Deployment successful! New version is now serving traffic."
+                                            '''
+                                        } // end withEnv
 
                                        // 5. GitHub에 "배포 성공" 상태 보고
                                        publishChecks(
