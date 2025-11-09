@@ -225,17 +225,36 @@ pipeline {
                                                     --region $REGION
                                                 echo "✅ Blue/Green deployment initiated!"
 
-                                                # 5. 배포 모니터링 (aws ecs wait 사용)
-                                                echo "👀 Monitoring deployment progress... (Waiting for services-stable)"
+                                                # 배포 모니터링 (수동 while 루프 복원)
+                                                echo "👀 Monitoring deployment progress... (Waiting for Bake Time and Blue termination)"
+                                                TIMEOUT=2400
+                                                ELAPSED=0
+                                                while [ $ELAPSED -lt $TIMEOUT ]; do
+                                                    SERVICE_INFO=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $REGION --query 'services[0]')
+                                                    DEPLOYMENT_STATUS=$(echo $SERVICE_INFO | jq -r '.deployments[0].status')
+                                                    RUNNING_COUNT=$(echo $SERVICE_INFO | jq -r '.runningCount')
+                                                    DESIRED_COUNT=$(echo $SERVICE_INFO | jq -r '.desiredCount')
+                                                    DEPLOYMENTS=$(echo $SERVICE_INFO | jq -r '.deployments | length')
 
-                                                # while 루프 대신 aws ecs wait 명령어 사용
-                                                # (기본 타임아웃 40분, Bake Time 포함하여 대기)
-                                                aws ecs wait services-stable \
-                                                    --cluster $CLUSTER_NAME \
-                                                    --services $SERVICE_NAME \
-                                                    --region $REGION
+                                                    echo "[ $(date '+%H:%M:%S') ] Status: $DEPLOYMENT_STATUS | Running: $RUNNING_COUNT/$DESIRED_COUNT | Deployments: $DEPLOYMENTS"
 
-                                                echo "🎉 Blue/Green deployment completed successfully!"
+                                                    # 배포가 완료(PRIMARY)되고 배포 개수가 1개(Blue 제거 완료)일 때
+                                                    if [ "$DEPLOYMENT_STATUS" = "PRIMARY" ] && [ "$RUNNING_COUNT" = "$DESIRED_COUNT" ] && [ "$DEPLOYMENTS" = "1" ]; then
+                                                        echo "🎉 Blue/Green deployment completed successfully!"
+                                                        break
+                                                    elif [ "$DEPLOYMENT_STATUS" = "FAILED" ]; then
+                                                        echo "💥 Deployment failed!"
+                                                        exit 1
+                                                    fi
+
+                                                    sleep 30
+                                                    ELAPSED=$(( $ELAPSED + 30 ))
+                                                done
+
+                                                if [ $ELAPSED -ge $TIMEOUT ]; then
+                                                    echo "⏰ Deployment timeout reached!"
+                                                    exit 1
+                                                fi
                                                 echo "🎊 Deployment successful! New version is now serving traffic."
                                             '''
                                         } // end withEnv
