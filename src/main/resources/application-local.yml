@@ -107,6 +107,11 @@ spring:
           predicates:
             - Path=/api/v1/stores/**
 
+        - id: store-service-admin-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/admin/stores/index/**
+
         # -----------------------------------------------
         # 4. Coupon Service APIs
         # -----------------------------------------------

@@ -112,6 +112,11 @@ spring:
           predicates:
             - Path=/api/v1/stores/**
 
+        - id: store-service-admin-api
+          uri: http://store.couponpop.internal:8080
+          predicates:
+            - Path=/api/v1/admin/stores/index/**
+
         # ===== Coupon Service =====
         - id: coupon-service-owner-api
           uri: http://coupon.couponpop.internal:8080
