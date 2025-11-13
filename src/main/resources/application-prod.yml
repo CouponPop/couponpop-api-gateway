@@ -134,6 +134,12 @@ spring:
           predicates:
             - Path=/api/v1/fcm-token
 
+        # ===== Coupon Batch =====
+        - id: coupon-batch-api
+          uri: http://batch.couponpop.internal:8080
+          predicates:
+            - Path=/api/v1/jobs/**
+
 management:
   endpoints:
     web:
