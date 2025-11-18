@@ -72,4 +72,4 @@ API 게이트웨이는 단독으로 실행되지 않으며, 요청을 전달할 
 
 * **서비스 디스커버리**: 이 게이트웨이는 Eureka 등 별도 Discovery Client를 사용하지 않습니다. 대신 `application-prod.yml`에 정의된 **AWS Service Connect의 내부 DNS 이름**(예: `http://member.couponpop.internal:8080`)을 사용하여 서비스를 직접 호출합니다.
 * **헬스 체크**: AWS Target Group의 헬스 체크는 게이트웨이 자체의 헬스 체크 엔드포인트인 `/actuator/health`를 사용해야 합니다. (`/health/member` 등은 백엔드 서비스의 상태를 확인하는 프록시 경로입니다.)
-* **인증 정책**: 본 게이트웨이는 인증/인가를 직접 처리하지 않습니다. 클라이언트의 `Authorization` 헤더를 변경 없이 그대로 백엔드 서비스로 전달(pass-through)하며, 실제 JWT 검증은 각 각 서비스(예: `member-service`)에서 `security-module`을 의존하여 수행됩니다.
+* **인증 정책**: 본 게이트웨이는 인증/인가를 직접 처리하지 않습니다. 클라이언트의 `Authorization` 헤더를 변경 없이 그대로 백엔드 서비스로 전달(pass-through)하며, 실제 JWT 검증은 각 서비스(예: `member-service`)에서 `security-module`을 의존하여 수행됩니다.
