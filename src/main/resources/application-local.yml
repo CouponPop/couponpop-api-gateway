@@ -1,0 +1,153 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes: # 구체적일수록 위에 작성하기
+        # -----------------------------------------------
+        # 1-1. Health Checks (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/health)
+        # -----------------------------------------------
+        - id: member-service-health
+          uri: http://localhost:8081 # Member Service (8081)
+          predicates:
+            - Path=/health/member
+          filters:
+            - RewritePath=/health/member, /actuator/health
+
+        - id: store-service-health
+          uri: http://localhost:8082 # Store Service (8082)
+          predicates:
+            - Path=/health/store
+          filters:
+            - RewritePath=/health/store, /actuator/health
+
+        - id: coupon-service-health
+          uri: http://localhost:8083 # Coupon Service (8083)
+          predicates:
+            - Path=/health/coupon
+          filters:
+            - RewritePath=/health/coupon, /actuator/health
+
+        - id: notification-service-health
+          uri: http://localhost:8084 # notification Service (8084)
+          predicates:
+            - Path=/health/notification
+          filters:
+            - RewritePath=/health/notification, /actuator/health
+
+        - id: batch-service-health
+          uri: http://localhost:8085 # batch Service (8085)
+          predicates:
+            - Path=/health/batch
+          filters:
+            - RewritePath=/health/batch, /actuator/health
+        # -----------------------------------------------
+        # 1-2. Actuator Prometheus (서비스별로 하나씩 보유, e.g /api/v1/{서비스명}/actuator/prometheus)
+        # -----------------------------------------------
+        - id: member-service-prometheus
+          uri: http://localhost:8081 # Member Service (8081)
+          predicates:
+            - Path=/prometheus/member
+          filters:
+            - RewritePath=/prometheus/member, /actuator/prometheus
+
+        - id: store-service-prometheus
+          uri: http://localhost:8082 # Store Service (8082)
+          predicates:
+            - Path=/prometheus/store
+          filters:
+            - RewritePath=/prometheus/store, /actuator/prometheus
+
+        - id: coupon-service-prometheus
+          uri: http://localhost:8083 # Coupon Service (8083)
+          predicates:
+            - Path=/prometheus/coupon
+          filters:
+            - RewritePath=/prometheus/coupon, /actuator/prometheus
+
+        - id: notification-service-prometheus
+          uri: http://localhost:8084 # Notification Service (8084)
+          predicates:
+            - Path=/prometheus/notification
+          filters:
+            - RewritePath=/prometheus/notification, /actuator/prometheus
+
+        - id: batch-service-prometheus
+          uri: http://localhost:8085 # Batch Service (8085)
+          predicates:
+            - Path=/prometheus/batch
+          filters:
+            - RewritePath=/prometheus/batch, /actuator/prometheus
+        # -----------------------------------------------
+        # 2. Member Service APIs
+        # -----------------------------------------------
+        - id: member-service-auth-api
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: member-service-member-api
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/members/**
+
+        # -----------------------------------------------
+        # 3. Store Service APIs
+        # -----------------------------------------------
+        - id: store-service-owner-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/owner/stores/**
+
+        - id: store-service-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/stores/**
+
+        - id: store-service-admin-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/admin/stores/index/**
+
+        # -----------------------------------------------
+        # 4. Coupon Service APIs
+        # -----------------------------------------------
+        - id: coupon-service-owner-api
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/owner/coupons/**
+
+        - id: coupon-service-api
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/coupons/**
+
+        # -----------------------------------------------
+        # 5. Notification Service APIs
+        # -----------------------------------------------
+        - id: notification-service-fcm-token-api
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/fcm-token
+
+        # -----------------------------------------------
+        # 6. Coupon Batch APIs
+        # -----------------------------------------------
+        - id: coupon-batch-api
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/jobs/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
