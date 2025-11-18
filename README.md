@@ -27,7 +27,7 @@ CouponPop 마이크로서비스 아키텍처의 모든 외부 요청에 대한 �
 | `/api/v1/members/**` | `http://member.couponpop.internal:8080` | 회원 정보 |
 | `/api/v1/owner/stores/**` | `http://store.couponpop.internal:8080` | (점주) 매장 관리 |
 | `/api/v1/stores/**` | `http://store.couponpop.internal:8080` | (고객) 매장 조회/검색 |
-| `/api/v1/owner/coupons/**`| `http://coupon.couponpop.internal:8080` | (점주) 쿠폰 이벤트 관리 |
+| `/api/v1/owner/coupons/**` | `http://coupon.couponpop.internal:8080` | (점주) 쿠폰 이벤트 관리 |
 | `/api/v1/coupons/**` | `http://coupon.couponpop.internal:8080` | (고객) 쿠폰 발급/조회 |
 | `/api/v1/fcm-token` | `http://notification.couponpop.internal:8080` | FCM 토큰 등록 |
 | `/api/v1/jobs/**` | `http://batch.couponpop.internal:8080` | 배치 외부 수동 트리거 |
